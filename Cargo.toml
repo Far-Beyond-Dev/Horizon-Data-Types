@@ -1,5 +1,5 @@
 [package]
-name = "Horizon-Data-Types"
+name = "horizon_data_types"
 version = "0.1.0"
 edition = "2021"
 description = "The Horizon data types library for third-party integrations"
