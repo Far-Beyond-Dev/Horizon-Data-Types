@@ -201,6 +201,13 @@ pub struct Vec3D {
     pub z: f64,
 }
 
+impl Default for Vec3D {
+    fn default() -> Self {
+        Vec3D { x: 0.0, y: 0.0, z: 0.0 }
+    }
+}
+
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Scale3D {
     pub x: f64,
