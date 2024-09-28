@@ -1,6 +1,6 @@
 [package]
-name = "Horizon-Data-Types"
-version = "0.1.1"
+name = "horizon_data_types"
+version = "0.1.4"
 edition = "2021"
 description = "The Horizon data types library for third-party integrations"
 license = "Apache-2.0"
