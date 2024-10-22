@@ -99,94 +99,79 @@ impl GameObject {
     }
 }
 
-/// Represents a player in the game world.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+////////////////////////////////
+//  Define the player struct  //
+////////////////////////////////
+
+#[derive(Debug, Clone)]
 pub struct Player {
-    /// Unique identifier for the player
+    // Socket and connection info
+    pub socket: SocketRef,
     pub id: Uuid,
-    /// Username of the player
-    pub username: String,
-    /// Current position of the player
-    pub position: Vector3,
-    /// Current health of the player
-    pub health: f32,
-    /// Inventory of the player
-    pub inventory: HashMap<String, u32>,
-    /// Additional player stats
-    pub stats: serde_json::Value,
+    pub last_update: Instant,
+    pub is_active: bool,
+
+    // Basic transform data
+    pub transform: Option<Transform>,
+    pub Vec2D: Option<Vec2D>,
+    pub controlRotation: Option<Vec3D>,
+
+    // Motion matching specific data
+    pub trajectory_path: Option<Vec<TrajectoryPoint>>,
+    pub key_joints: Option<Vec<Vec3D>>,
+    pub root_velocity: Option<Vec3D>,
+
+    // Useful data for animation state machine replication
+    pub animation_state: Option<String>,
+
+    // Additional data that might be useful to plugins
+    pub last_input_time: Instant,
 }
 
 impl Player {
-    /// Creates a new Player instance.
-    ///
-    /// # Arguments
-    ///
-    /// * `username` - The username of the player
-    /// * `position` - The initial position of the player
-    /// * `health` - The initial health of the player
-    /// * `stats` - Additional player stats
-    ///
-    /// # Returns
-    ///
-    /// A new Player instance with a randomly generated UUID and empty inventory
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use game_server_architecture::{Player, Vector3};
-    /// use serde_json::json;
-    ///
-    /// let player = Player::new(
-    ///     "Alice".to_string(),
-    ///     Vector3::new(0.0, 0.0, 0.0),
-    ///     100.0,
-    ///     json!({"strength": 10, "agility": 15})
-    /// );
-    ///
-    /// assert_eq!(player.username, "Alice");
-    /// assert_eq!(player.health, 100.0);
-    /// assert_eq!(player.stats["strength"], 10);
-    /// assert!(player.inventory.is_empty());
-    /// ```
-    pub fn new(username: String, position: Vector3, health: f32, stats: serde_json::Value) -> Self {
-        Self {
-            id: Uuid::new_v4(),
-            username,
-            position,
-            health,
-            inventory: HashMap::new(),
-            stats,
+    pub fn new(socket: SocketRef, id: String) -> Self {
+        Player {
+            socket,
+            id,
+            last_update: Instant::now(),
+            is_active: true,
+            transform: None,
+            Vec2D: None,
+            controlRotation: None,
+            trajectory_path: None,
+            key_joints: None,
+            root_velocity: None,
+            animation_state: None,
+            last_input_time: Instant::now(),
         }
     }
 
-    /// Adds an item to the player's inventory.
-    ///
-    /// # Arguments
-    ///
-    /// * `item` - The name of the item
-    /// * `quantity` - The quantity of the item to add
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use game_server_architecture::{Player, Vector3};
-    /// use serde_json::json;
-    ///
-    /// let mut player = Player::new(
-    ///     "Bob".to_string(),
-    ///     Vector3::new(0.0, 0.0, 0.0),
-    ///     100.0,
-    ///     json!({})
-    /// );
-    ///
-    /// player.add_to_inventory("Sword".to_string(), 1);
-    /// assert_eq!(player.inventory.get("Sword"), Some(&1));
-    ///
-    /// player.add_to_inventory("Sword".to_string(), 1);
-    /// assert_eq!(player.inventory.get("Sword"), Some(&2));
-    /// ```
-    pub fn add_to_inventory(&mut self, item: String, quantity: u32) {
-        *self.inventory.entry(item).or_insert(0) += quantity;
+    pub fn update_from_data(&mut self, data: &serde_json::Value) {
+        // Implementation of updating player from received data
+        // This would be similar to what we did in the update_player_location function
+    }
+}
+pub struct PlayerManager {
+    players: Mutex<HashMap<String, Arc<Notify>>>,
+}
+
+impl PlayerManager {
+    pub fn new() -> Self {
+        PlayerManager {
+            players: Mutex::new(HashMap::new()),
+        }
+    }
+
+    pub fn add_player(&self, player_id: String) -> Arc<Notify> {
+        let notify = Arc::new(Notify::new());
+        self.players.lock().unwrap().insert(player_id, notify.clone());
+        notify
+    }
+
+    pub fn remove_player(&self, player_id: &str) {
+        if let Some(notify) = self.players.lock().unwrap().remove(player_id) {
+            notify.notify_one();
+        }
     }
 }
 
