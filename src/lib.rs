@@ -6,6 +6,11 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use std::collections::{HashMap, HashSet};
+use tokio::sync::Notify;
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::time::Instant;
+use socketioxide::extract::SocketRef;
 
 /// Represents a 3D vector in the game world.
 #[derive(Debug, Clone, Copy, Serialize, Deserialize)]
@@ -129,7 +134,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(socket: SocketRef, id: String) -> Self {
+    pub fn new(socket: SocketRef, id: Uuid) -> Self {
         Player {
             socket,
             id,
@@ -174,6 +179,68 @@ impl PlayerManager {
         }
     }
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Transform {
+    pub location: Option<Translation>,
+    pub rotation: Option<Rotation>,
+    pub translation: Option<Translation>,
+    pub scale3D: Scale3D,
+}
+
+impl Default for Transform {
+    fn default() -> Self {
+        Transform {
+            location: None,
+            rotation: None,
+            scale3D: Scale3D { x: 1.0, y: 1.0, z: 1.0 },
+            translation: None,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Vec2D {
+    pub x: f64,
+    pub y: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Scale3D {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub struct Translation {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Rotation {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub w: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Vec3D {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+}
+
+#[derive(Debug, Clone)]
+pub struct TrajectoryPoint {
+    pub accumulated_seconds: f64,
+    pub facing: Rotation,
+    pub position: Translation,
+}
+
 
 /// Represents an event in the game world.
 #[derive(Debug, Clone, Serialize, Deserialize)]
