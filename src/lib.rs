@@ -497,7 +497,8 @@ pub struct ChildServer {
     /// Unique identifier for the game server
     pub id: Uuid,
     /// Socket Referece
-    pub socket: SocketRef,
+    #[serde(skip)]
+    pub socket: Option<SocketRef>,
     /// Spatial partition representing the server's area of responsibility
     pub partition: SpatialPartition,
     /// Set of player IDs currently managed by this server
@@ -535,7 +536,7 @@ impl ChildServer {
         Self {
             id: Uuid::new_v4(),
             partition,
-            socket,
+            socket: Some(socket),
             players: HashSet::new(),
             objects: HashSet::new(),
         }
