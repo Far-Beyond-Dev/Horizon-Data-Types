@@ -6,6 +6,7 @@
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use std::collections::{HashMap, HashSet};
+use std::net::SocketAddr;
 use tokio::sync::Notify;
 use std::sync::Arc;
 use std::sync::Mutex;
@@ -240,7 +241,6 @@ pub struct TrajectoryPoint {
     pub facing: Rotation,
     pub position: Translation,
 }
-
 
 /// Represents an event in the game world.
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -489,6 +489,89 @@ impl GameServer {
         ) / 2.0
     }
 }
+
+
+/// Represents a game server in the distributed architecture.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ChildServer {
+    /// Unique identifier for the game server
+    pub id: Uuid,
+    /// Socket Referece
+    pub socket: SocketRef,
+    /// Spatial partition representing the server's area of responsibility
+    pub partition: SpatialPartition,
+    /// Set of player IDs currently managed by this server
+    pub players: HashSet<Uuid>,
+    /// Set of game object IDs currently managed by this server
+    pub objects: HashSet<Uuid>,
+}
+
+impl ChildServer {
+    /// Creates a new GameServer instance.
+    ///
+    /// # Arguments
+    ///
+    /// * `partition` - The spatial partition representing the server's area
+    ///
+    /// # Returns
+    ///
+    /// A new GameServer instance with a randomly generated UUID and empty sets of players and objects
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use game_server_architecture::{GameServer, SpatialPartition, Vector3};
+    ///
+    /// let partition = SpatialPartition::new(
+    ///     Vector3::new(0.0, 0.0, 0.0),
+    ///     Vector3::new(100.0, 100.0, 100.0)
+    /// );
+    /// let server = GameServer::new(partition);
+    ///
+    /// assert!(server.players.is_empty());
+    /// assert!(server.objects.is_empty());
+    /// ```
+    pub fn new(partition: SpatialPartition, socket: SocketRef) -> Self {
+        Self {
+            id: Uuid::new_v4(),
+            partition,
+            socket,
+            players: HashSet::new(),
+            objects: HashSet::new(),
+        }
+    }
+
+    /// let partition = SpatialPartition::new(
+    ///     Vector3::new(0.0, 0.0, 0.0),
+    ///     Vector3::new(100.0, 100.0, 100.0)
+    /// );
+    /// let mut server = GameServer::new(partition);
+    ///
+    /// let event = GameEvent::new(
+    ///     "Explosion".to_string(),
+    ///     Vector3::new(50.0, 50.0, 50.0),
+    ///     10.0,
+    ///     json!({"damage": 50})
+    /// );
+    ///
+    /// let overflows = server.process_event(&event);
+    /// assert!(!overflows);
+    /// ```
+    pub fn process_event(&mut self, event: &GameEvent) -> bool {
+        // Process the event for all relevant entities
+        // This is a simplified implementation; in a real system, you'd update
+        // players and objects affected by the event
+
+        // Check if the event overflows the server's boundaries
+        !self.partition.contains(&event.position) || 
+        event.radius > (self.partition.max.x - self.partition.min.x).min(
+            (self.partition.max.y - self.partition.min.y).min(
+                self.partition.max.z - self.partition.min.z
+            )
+        ) / 2.0
+    }
+}
+
 
 /// Represents a cluster of game servers managed by a master server.
 #[derive(Debug, Clone, Serialize, Deserialize)]
